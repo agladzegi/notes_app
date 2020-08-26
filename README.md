@@ -18,14 +18,13 @@
   - [x] Add new note
   - [x] Delete note
     - [x] Create controller
-- [] Start working on frontend, Vue or React
-- [] Install dependencies, axios etc.
-- [] Implement Context API
-- [] Copy styles, for time sake
-- [] Create register and login form
-- [] Create home and dashboard pages
-  - [] Create form in dashboard page to add new notes
-  - [] List all notes created by user
+- [x] Start working on frontend, Vue or React
+- [x] Install dependencies, axios etc.
+- [x] Copy styles, for time sake
+- [x] Create register and login form
+- [x] Create Dashboard page
+  - [x] Create form in dashboard page to add new notes
+  - [x] List all notes created by user
   - [] Button to remove notes
 
 ### STRETCH:

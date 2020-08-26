@@ -4,8 +4,18 @@ const jwt = require('jsonwebtoken');
 const authSchema = require('./auth.schema');
 const users = require('./auth.model');
 
+const getUser = async (req, res, next) => {
+  try {
+    const user = await users.findOne({ _id: req.user._id }, '-password');
+
+    res.json(user);
+  } catch (error) {
+    next(error);
+  }
+};
+
 const register = async (req, res, next) => {
-  const result = authSchema.schema.validate(req.body);
+  const result = authSchema.schema.validateAsync(req.body);
   if (!result.error) {
     try {
       const user = await users.findOne({ email: req.body.email });
@@ -54,14 +64,15 @@ const register = async (req, res, next) => {
 };
 
 const login = async (req, res, next) => {
-  const result = authSchema.loginSchema.validate(req.body);
+  const result = authSchema.loginSchema.validateAsync(req.body);
   if (!result.error) {
     try {
       const user = await users.findOne({ email: req.body.email });
 
       if (!user) {
+        const error = new Error('Unable to login');
         res.status(404);
-        next(new Error('Unable to login'));
+        next(error);
       }
 
       const result = await bcrypt.compareSync(req.body.password, user.password);
@@ -91,7 +102,6 @@ const login = async (req, res, next) => {
         throw new Error('Unable to login');
       }
     } catch (error) {
-      res.status(500);
       next(error);
     }
   } else {
@@ -103,4 +113,5 @@ const login = async (req, res, next) => {
 module.exports = {
   register,
   login,
+  getUser,
 };
