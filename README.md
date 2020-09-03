@@ -25,14 +25,14 @@
 - [x] Create Dashboard page
   - [x] Create form in dashboard page to add new notes
   - [x] List all notes created by user
-  - [] Button to remove notes
+  - [x] Button to remove notes
 
 ### STRETCH:
 
-- [] Secure app with rate limiting etc.
-- [] Setup linter
-- [] Install testing library and create tests
-- [] Add passport to have different login stategies
-- [] Maybe use cookies instead of tokens
-- [] Functionallity so user can update their profiles or notes
-- [] Other language support
+- [ ] Secure app with rate limiting etc.
+- [ ] Setup linter
+- [ ] Install testing library and create tests
+- [ ] Add passport to have different login stategies
+- [ ] Maybe use cookies instead of tokens
+- [ ] Functionallity so user can update their profiles or notes
+- [ ] Other language support

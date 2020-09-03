@@ -3,12 +3,11 @@
     <h1 class="text-center mt-5 mb-5">Dashboard</h1>
     <h1 v-if="!user">Getting user information...</h1>
     <h1 v-if="user">Hello, {{ user.fullName }}!! 👋</h1>
+    <div v-if="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
     <button @click="logout()" class="btn btn-primary">Logout</button>
     <br />
     <br />
-    <button @click="showForm = !showForm" class="btn btn-info">
-      Toggle Form
-    </button>
+    <button @click="showForm = !showForm" class="btn btn-info">Toggle Form</button>
     <form v-if="showForm" @submit.prevent="addNote()">
       <div class="form-group">
         <label for="title">Title</label>
@@ -21,9 +20,7 @@
           placeholder="Enter a title"
           required
         />
-        <small id="titleHelp" class="form-text text-muted">
-          Enter a descriptive title for your note.
-        </small>
+        <small id="titleHelp" class="form-text text-muted">Enter a descriptive title for your note.</small>
       </div>
       <div class="form-group">
         <label for="note">Note</label>
@@ -47,6 +44,9 @@
           <div class="card-body">
             <p class="card-text" v-html="renderMarkDown(note.note)"></p>
           </div>
+          <div class="card-footer text-muted">
+            <button @click="deleteNote(note._id)" class="btn btn-danger">Delete</button>
+          </div>
         </div>
       </div>
     </section>
@@ -54,8 +54,8 @@
 </template>
 
 <script>
-import MarkdownIt from 'markdown-it';
-import axios from 'axios';
+import MarkdownIt from "markdown-it";
+import axios from "axios";
 
 const md = new MarkdownIt();
 
@@ -65,9 +65,10 @@ export default {
   data: () => ({
     showForm: false,
     user: null,
+    errorMessage: "",
     newNote: {
-      title: '',
-      note: '',
+      title: "",
+      note: "",
     },
     notes: [],
   }),
@@ -88,7 +89,12 @@ export default {
         this.logout();
       }
     } catch (error) {
-      console.log(error.response.data.message);
+      if (error.response.status === 401) {
+        localStorage.removeItem("token");
+        this.$router.push("/");
+      }
+
+      this.errorMessage = error.response.data.message;
     }
   },
   methods: {
@@ -105,17 +111,18 @@ export default {
 
         this.notes = res.data;
       } catch (error) {
-        console.log(error.response.data.message);
+        this.errorMessage = error.response.data.message;
       }
     },
     async addNote() {
+      this.errorMessage = "";
       try {
         const res = await axios.post(
           `${serverUrl}/api/v1/notes`,
           this.newNote,
           {
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
               Authorization: `Bearer ${localStorage.token}`,
             },
           }
@@ -123,17 +130,32 @@ export default {
 
         this.notes.push(res.data);
         this.newNote = {
-          title: '',
-          note: '',
+          title: "",
+          note: "",
         };
         this.showForm = false;
       } catch (error) {
-        console.log(error.response.data.message);
+        this.errorMessage = error.response.data.message;
+      }
+    },
+    async deleteNote(_id) {
+      this.errorMessage = "";
+      try {
+        await axios.delete(`${serverUrl}/api/v1/notes/${_id}`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.token}`,
+          },
+        });
+
+        this.notes = this.notes.filter((note) => note._id !== _id);
+      } catch (error) {
+        this.errorMessage = error.response.data.message;
       }
     },
     logout() {
-      localStorage.removeItem('token');
-      this.$router.push('/');
+      localStorage.removeItem("token");
+      this.$router.push("/");
     },
   },
 };
@@ -143,6 +165,7 @@ export default {
 .card {
   height: 90%;
 }
+
 .card-text img {
   width: 70%;
   display: block;
