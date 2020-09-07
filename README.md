@@ -29,6 +29,7 @@
 
 ### STRETCH:
 
+- [x] Setup VueX
 - [ ] Secure app with rate limiting etc.
 - [ ] Setup linter
 - [ ] Install testing library and create tests

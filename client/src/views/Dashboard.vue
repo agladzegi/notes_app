@@ -35,8 +35,8 @@
       </div>
       <button type="submit" class="btn btn-success">Add Note</button>
     </form>
-    <section v-if="notes.length > 0" class="row mt-3">
-      <div class="col-6" v-for="note in notes" :key="note._id">
+    <section v-if="showNotes.length > 0" class="row mt-3">
+      <div class="col-6" v-for="note in showNotes" :key="note._id">
         <div class="card border-info mb-3">
           <div class="card-header">
             <h1>{{ note.title }}</h1>
@@ -56,6 +56,7 @@
 <script>
 import MarkdownIt from "markdown-it";
 import axios from "axios";
+import { mapState, mapMutations, mapActions, mapGetters } from "vuex";
 
 const md = new MarkdownIt();
 
@@ -64,98 +65,54 @@ const serverUrl = process.env.VUE_APP_SERVER_URL;
 export default {
   data: () => ({
     showForm: false,
-    user: null,
-    errorMessage: "",
     newNote: {
       title: "",
       note: "",
     },
-    notes: [],
   }),
+  computed: {
+    ...mapState("auth", ["errorMessage", "loading", "user"]),
+    ...mapGetters("notes", ["showNotes"]),
+  },
+  watch: {
+    user: {
+      handler() {
+        if (this.user) {
+          this.getNotes();
+        } else {
+          this.$router.push("/");
+        }
+      },
+    },
+  },
   async mounted() {
-    try {
-      const res = await axios.get(`${serverUrl}/api/v1/auth`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.token}`,
-        },
-      });
-
-      const user = await res.data;
-
-      if (user) {
-        this.user = user;
-        this.getNotes();
-      } else {
-        this.logout();
-      }
-    } catch (error) {
-      if (error.response.status === 401) {
-        localStorage.removeItem("token");
-        this.$router.push("/");
-      }
-
-      this.errorMessage = error.response.data.message;
-    }
+    this.getUser();
   },
   methods: {
+    ...mapMutations("auth", ["logout", "setError"]),
+    ...mapActions("auth", ["getUser"]),
+    ...mapActions("notes", ["getNotes", "addNewNote", "delNote"]),
     renderMarkDown(note) {
       return md.render(note);
     },
-    async getNotes() {
-      try {
-        const res = await axios.get(`${serverUrl}/api/v1/notes`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.token}`,
-          },
-        });
-
-        this.notes = res.data;
-      } catch (error) {
-        this.errorMessage = error.response.data.message;
-      }
-    },
     async addNote() {
-      this.errorMessage = "";
-      try {
-        const res = await axios.post(
-          `${serverUrl}/api/v1/notes`,
-          this.newNote,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.token}`,
-            },
-          }
-        );
+      this.setError("");
+      const formData = {
+        title: this.newNote.title,
+        note: this.newNote.note,
+      };
 
-        this.notes.push(res.data);
-        this.newNote = {
-          title: "",
-          note: "",
-        };
-        this.showForm = false;
-      } catch (error) {
-        this.errorMessage = error.response.data.message;
-      }
+      this.addNewNote(formData);
+
+      this.newNote = {
+        title: "",
+        note: "",
+      };
+      this.showForm = false;
     },
     async deleteNote(_id) {
-      this.errorMessage = "";
-      try {
-        await axios.delete(`${serverUrl}/api/v1/notes/${_id}`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.token}`,
-          },
-        });
-
-        this.notes = this.notes.filter((note) => note._id !== _id);
-      } catch (error) {
-        this.errorMessage = error.response.data.message;
-      }
-    },
-    logout() {
-      localStorage.removeItem("token");
-      this.$router.push("/");
+      this.setError("");
+      this.delNote(_id);
     },
   },
 };
